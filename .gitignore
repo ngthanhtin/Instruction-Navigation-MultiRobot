@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pt
+*.pth
+*.zip
+*.pth
+*.npy
+frames/
+*.avi
+*dae
