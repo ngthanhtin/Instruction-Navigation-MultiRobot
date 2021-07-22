@@ -14,6 +14,7 @@ It can be seen that the robot on the right-hand side moves surprisingly faster. 
 This repo contains the [trained models](./src/trained_models/) to perform like the demo above. It is also daunting to reproduce this result. The reason could be briefly explained in this [article](https://www.alexirpan.com/2018/02/14/rl-hard.html). See the [installation](./INSTALL.md) for more information.
 
 ## Acknowledgement
+- [SingleAgentDDPG with Depth](https://github.com/trqminh/rl-mapless-navigation)
 - [MotionPlannerUsingDDPG](https://github.com/m5823779/MotionPlannerUsingDDPG)
 - [Lei Tai et al.](https://arxiv.org/pdf/1703.00420.pdf)
 - [monodepth2](https://github.com/nianticlabs/monodepth2)
