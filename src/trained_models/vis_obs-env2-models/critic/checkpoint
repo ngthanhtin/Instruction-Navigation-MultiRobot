@@ -1,0 +1,6 @@
+model_checkpoint_path: "critic-network-60000"
+all_model_checkpoint_paths: "critic-network-20000"
+all_model_checkpoint_paths: "critic-network-30000"
+all_model_checkpoint_paths: "critic-network-40000"
+all_model_checkpoint_paths: "critic-network-50000"
+all_model_checkpoint_paths: "critic-network-60000"
