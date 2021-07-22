@@ -1,0 +1,14 @@
+<launch>
+    <arg name="robot_name"/>
+    <arg name="init_pose"/>
+
+    <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf"
+     args="-urdf -model $(arg robot_name) $(arg init_pose) -param /robot_description"
+     />
+
+    <!-- <node pkg="robot_state_publisher" type="state_publisher" 
+          name="robot_state_publisher" output="screen"/> -->
+
+    <!-- The odometry estimator, throttling, fake laser etc. go here -->
+    <!-- All the stuff as from usual robot launch file -->
+</launch>
