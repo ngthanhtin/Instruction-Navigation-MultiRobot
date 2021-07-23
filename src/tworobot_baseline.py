@@ -78,7 +78,11 @@ def main():
         Path(figures_path).mkdir(parents=True, exist_ok=True)
 
         avg_reward_his = []
-        total_reward = 0
+        threshold_init = 20
+        total_rewards = []
+        avg_scores = []
+        max_avg_score = -1
+        max_score = -1
         var = 1.
         ep_rets = []
         ep_ret = 0.
@@ -86,7 +90,7 @@ def main():
         while True:
             states = env.reset()
             one_round_step = 0
-
+            scores = np.zeros(2) 
             while True:
                 a = agent.act(states)
                 a[0][0] = np.clip(np.random.normal(a[0][0], var), 0., 1.)
@@ -103,6 +107,7 @@ def main():
                 else:
                     result = 'Fail'
 
+                
                 # if time_step > 0:
                 #     total_reward += r
                 #     ep_ret += r
@@ -124,10 +129,12 @@ def main():
                 # if time_step % 5 == 0 and time_step > exploration_decay_start_step:
                 #     var *= 0.9999
 
+                scores += np.array(r)
                 past_action = a
                 states = state_s
                 one_round_step += 1
                 print(one_round_step)
+
                 # if arrive_s:
                 #     print('Step: %3i' % one_round_step, '| Var: %.2f' % var, '| Time step: %i' % time_step, '|', result)
                 #     one_round_step = 0
@@ -143,6 +150,31 @@ def main():
                 #     break
                 if (dones[0] == 1 and dones[1] == 1) or (arrives[0] == 1 and arrives[1] == 1) or one_round_step >= 500:
                     break
+            
+            episode_score = np.max(scores)
+            total_rewards.append(episode_score)
+            print("Score: {:.4f}".format(episode_score))
+
+            if max_score <= episode_score:                     
+                max_score = episode_score
+                agent.save('./tworobot_weights.pth')
+
+            if len(total_rewards) >= 100:                       # record avg score for the latest 100 steps
+                latest_avg_score = sum(total_rewards[(len(total_rewards)-100):]) / 100
+                print("100 Episodic Everage Score: {:.4f}".format(latest_avg_score))
+                avg_scores.append(latest_avg_score)
+            
+                # if max_avg_score <= latest_avg_score:           # record better results
+                #     worsen_tolerance = threshold_init           # re-count tolerance
+                #     max_avg_score = latest_avg_score
+                # else:                                           
+                #     if max_avg_score > 0.5:                     
+                #         worsen_tolerance -= 1                   # count worsening counts
+                #         print("Loaded from last best model.")
+                #         agent.load(best_model_path)             # continue from last best-model
+                #     if worsen_tolerance <= 0:                   # earliy stop training
+                #         print("Early Stop Training.")
+                #         break
 
     else:
         print('Testing mode')
