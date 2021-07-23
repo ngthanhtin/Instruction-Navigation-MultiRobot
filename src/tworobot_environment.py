@@ -10,7 +10,8 @@ from geometry_msgs.msg import Twist, Point, Pose
 from sensor_msgs.msg import LaserScan, Image
 from nav_msgs.msg import Odometry
 from std_srvs.srv import Empty
-from gazebo_msgs.srv import SpawnModel, DeleteModel
+from gazebo_msgs.srv import SpawnModel, DeleteModel, SetModelState
+from gazebo_msgs.msg import ModelState
 
 from cv_bridge import CvBridge, CvBridgeError
 from monodepth2 import *
@@ -41,20 +42,21 @@ class Env():
         #------------ROBOT 1----------------#
         self.position_1 = Pose()
         self.past_distance_1 = 0.
-        self.pub_cmd_vel_1 = rospy.Publisher('robot1/cmd_vel', Twist, queue_size=10)
-        self.sub_odom_1 = rospy.Subscriber('robot1/odom', Odometry, self.getOdometry, 1)
+        self.pub_cmd_vel_1 = rospy.Publisher('/robot1/cmd_vel', Twist, queue_size=10)
+        self.sub_odom_1 = rospy.Subscriber('/robot1/odom', Odometry, self.getOdometry, 1)
 
         #------------ROBOT 2----------------#
         self.position_2 = Pose()
         self.past_distance_2 = 0.
-        self.pub_cmd_vel_2 = rospy.Publisher('robot2/cmd_vel', Twist, queue_size=10)
-        self.sub_odom_2 = rospy.Subscriber('robot2/odom', Odometry, self.getOdometry, 2)
+        self.pub_cmd_vel_2 = rospy.Publisher('/robot2/cmd_vel', Twist, queue_size=10)
+        self.sub_odom_2 = rospy.Subscriber('/robot2/odom', Odometry, self.getOdometry, 2)
 
         self.reset_proxy = rospy.ServiceProxy('gazebo/reset_simulation', Empty)
         self.unpause_proxy = rospy.ServiceProxy('gazebo/unpause_physics', Empty)
         self.pause_proxy = rospy.ServiceProxy('gazebo/pause_physics', Empty)
         self.goal = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
         self.del_model = rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)
+        self.gazebo_model_state_service = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
         
 
         if self.test_env_id == 4:
@@ -213,8 +215,17 @@ class Env():
                 else:
                     scan_range.append(scan.ranges[n_i])
 
-            if min_range > min(scan_range) > 0:
-                done = True
+            if min_range > min(scan_range) > 0: #collide
+                die = True
+                model_state = ModelState()
+                model_state.model_name = 'turtlebot3_burger_1'
+                model_state.pose.position.x = 1
+                model_state.pose.position.y = 1
+                model_state.pose.position.z = 0
+
+                # Respawn the robot
+                self.gazebo_model_state_service(model_state)
+                
 
             current_distance = math.hypot(self.goal_position.position.x - self.position_1.x, self.goal_position.position.y - self.position_1.y)
             if current_distance <= self.threshold_arrive:
@@ -270,8 +281,16 @@ class Env():
                 else:
                     scan_range.append(scan.ranges[n_i])
 
-            if min_range > min(scan_range) > 0:
+            if min_range > min(scan_range) > 0: #collide
                 die = True
+                model_state = ModelState()
+                model_state.model_name = 'turtlebot3_burger_2'
+                model_state.pose.position.x = -1
+                model_state.pose.position.y = 1
+                model_state.pose.position.z = 0
+
+                # Respawn the robot
+                self.gazebo_model_state_service(model_state)
 
             current_distance = math.hypot(self.goal_position.position.x - self.position_2.x, self.goal_position.position.y - self.position_2.y)
             if current_distance <= self.threshold_arrive:
@@ -418,7 +437,7 @@ class Env():
 
         linear_vel_2 = action_n[1][0]
         ang_vel_2 = action_n[1][1]
-
+        
         vel_cmd_2 = Twist()
         vel_cmd_2.linear.x = linear_vel_2 / 4
         vel_cmd_2.angular.z = ang_vel_2
@@ -463,24 +482,27 @@ class Env():
             state_2.append(pa)
 
         state_1 = state_1 + [rel_dis_1 / diagonal_dis, yaw_1 / 360, rel_theta_1 / 360, diff_angle_1 / 180]
-        state_1 = state_2 + [rel_dis_2 / diagonal_dis, yaw_2 / 360, rel_theta_2 / 360, diff_angle_2 / 180]
-        
+        state_1 = np.array(state_1)
+        state_2 = state_2 + [rel_dis_2 / diagonal_dis, yaw_2 / 360, rel_theta_2 / 360, diff_angle_2 / 180]
+        state_2 = np.array(state_2)
+
         state = [state_1, state_2]
 
         r1 = self.setRewardIndex(die_1, arrive_1, index=1)
         r2 = self.setRewardIndex(die_2, arrive_2, index=2)
 
-        reward = self.setReward([arrive_1, arrive_2], [r1, r2])
+        # reward = self.setReward([arrive_1, arrive_2], [r1, r2])
         self.n_step += 1
 
-        done, arrive = False, False
-        if die_1 == True and die_2 == True:
-            done = True
+        # done, arrive = False, False
+        # if die_1 == True and die_2 == True:
+        #     done = True
         
-        if arrive_1 == True and arrive_2 == True:
-            arrive = True
+        # if arrive_1 == True and arrive_2 == True:
+        #     arrive = True
 
-        return np.asarray(state_1), reward, done, arrive
+        # return np.asarray(state), reward, done, arrive
+        return state, [r1, r2], [die_1, die_2], [arrive_1, arrive_2]
 
     def reset(self):
         # Reset the env #
@@ -578,7 +600,10 @@ class Env():
         state_2.append(0)
 
         state_1 = state_1 + [rel_dis_1 / diagonal_dis, yaw_1 / 360, rel_theta_1 / 360, diff_angle_1 / 180]
-        state_1 = state_2 + [rel_dis_2 / diagonal_dis, yaw_2 / 360, rel_theta_2 / 360, diff_angle_2 / 180]
+        state_1 = np.array(state_1)
+        state_2 = state_2 + [rel_dis_2 / diagonal_dis, yaw_2 / 360, rel_theta_2 / 360, diff_angle_2 / 180]
+        state_2 = np.array(state_2)
 
         state = [state_1, state_2]
-        return np.asarray(state_1)
+        # return np.asarray(state)
+        return state
