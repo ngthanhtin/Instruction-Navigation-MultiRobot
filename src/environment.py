@@ -199,7 +199,7 @@ class Env():
             self.pub_cmd_vel.publish(Twist())
             rospy.wait_for_service('/gazebo/delete_model')
             self.del_model('target')
-
+            print(arrive)
             # Build the target
             rospy.wait_for_service('/gazebo/spawn_sdf_model')
             try:

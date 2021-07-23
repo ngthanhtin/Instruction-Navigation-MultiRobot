@@ -103,43 +103,45 @@ def main():
                 else:
                     result = 'Fail'
 
-                if time_step > 0:
-                    total_reward += r
-                    ep_ret += r
-                print("Timestep: ",time_step)
-                if time_step % 10000 == 0 and time_step > 0:
-                    print('---------------------------------------------------')
-                    avg_reward = total_reward / 10000
-                    print('Average_reward = ', avg_reward)
-                    avg_reward_his.append(round(avg_reward, 2))
-                    print('Average Reward:',avg_reward_his)
-                    total_reward = 0
-                    print('Mean episode return over training time step: {:.2f}'.format(np.mean(ep_rets)))
-                    print('Mean episode return over current 10k training time step: {:.2f}'.format(np.mean(ep_rets[-10:])))
-                    write_to_csv(np.mean(ep_rets), figures_path + 'mean_ep_ret_his.csv')
-                    write_to_csv(np.mean(ep_rets[-10:]), figures_path + 'mean_ep_ret_10k_his.csv')
-                    write_to_csv(avg_reward, figures_path + 'avg_reward_his.csv')
-                    print('---------------------------------------------------')
+                # if time_step > 0:
+                #     total_reward += r
+                #     ep_ret += r
+                # print("Timestep: ",time_step)
+                # if time_step % 10000 == 0 and time_step > 0:
+                #     print('---------------------------------------------------')
+                #     avg_reward = total_reward / 10000
+                #     print('Average_reward = ', avg_reward)
+                #     avg_reward_his.append(round(avg_reward, 2))
+                #     print('Average Reward:',avg_reward_his)
+                #     total_reward = 0
+                #     print('Mean episode return over training time step: {:.2f}'.format(np.mean(ep_rets)))
+                #     print('Mean episode return over current 10k training time step: {:.2f}'.format(np.mean(ep_rets[-10:])))
+                #     write_to_csv(np.mean(ep_rets), figures_path + 'mean_ep_ret_his.csv')
+                #     write_to_csv(np.mean(ep_rets[-10:]), figures_path + 'mean_ep_ret_10k_his.csv')
+                #     write_to_csv(avg_reward, figures_path + 'avg_reward_his.csv')
+                #     print('---------------------------------------------------')
 
-                if time_step % 5 == 0 and time_step > exploration_decay_start_step:
-                    var *= 0.9999
+                # if time_step % 5 == 0 and time_step > exploration_decay_start_step:
+                #     var *= 0.9999
 
                 past_action = a
-                state = state_
+                states = state_s
                 one_round_step += 1
+                print(one_round_step)
+                # if arrive_s:
+                #     print('Step: %3i' % one_round_step, '| Var: %.2f' % var, '| Time step: %i' % time_step, '|', result)
+                #     one_round_step = 0
+                #     if time_step > 0:
+                #         ep_rets.append(ep_ret)
+                #         ep_ret = 0.
 
-                if arrive:
-                    print('Step: %3i' % one_round_step, '| Var: %.2f' % var, '| Time step: %i' % time_step, '|', result)
-                    one_round_step = 0
-                    if time_step > 0:
-                        ep_rets.append(ep_ret)
-                        ep_ret = 0.
-
-                if done or one_round_step >= 500:
-                    print('Step: %3i' % one_round_step, '| Var: %.2f' % var, '| Time step: %i' % time_step, '|', result)
-                    if time_step > 0:
-                        ep_rets.append(ep_ret)
-                        ep_ret = 0.
+                # if done_s or one_round_step >= 500:
+                #     print('Step: %3i' % one_round_step, '| Var: %.2f' % var, '| Time step: %i' % time_step, '|', result)
+                #     if time_step > 0:
+                #         ep_rets.append(ep_ret)
+                #         ep_ret = 0.
+                #     break
+                if (dones[0] == 1 and dones[1] == 1) or (arrives[0] == 1 and arrives[1] == 1) or one_round_step >= 500:
                     break
 
     else:

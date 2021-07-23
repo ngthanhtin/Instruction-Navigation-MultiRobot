@@ -7,7 +7,7 @@ from collections import deque, namedtuple
 import random
 import copy
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
 eps = np.finfo(np.float32).eps.item()
 
 
@@ -48,10 +48,10 @@ class MADDPG:
         """
         states, actions, rewards, next_states, dones = experiences
         for agent_idx, agent in enumerate(self.adversarial_agents):
-            state = states[agent_idx,:]
+            state = states[agent_idx]
             action = actions[agent_idx,:]
             reward = rewards[agent_idx]
-            next_state = next_states[agent_idx,:]
+            next_state = next_states[agent_idx]
             done = dones[agent_idx]
             agent.update_model(state, action, reward, next_state, done)
             
