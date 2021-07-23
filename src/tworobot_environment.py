@@ -331,7 +331,7 @@ class Env():
         arrive_n: an array contains arrival of n robots
         reward_n : reward of n robots
         """
-        if arrive_n[0] == True and arrive_n[1] == True: 
+        if arrive_n[0] == True or arrive_n[1] == True: 
             # build new target
             rospy.wait_for_service('/gazebo/delete_model')
             self.del_model('target')
@@ -491,7 +491,7 @@ class Env():
         r1 = self.setRewardIndex(die_1, arrive_1, index=1)
         r2 = self.setRewardIndex(die_2, arrive_2, index=2)
 
-        # reward = self.setReward([arrive_1, arrive_2], [r1, r2])
+        reward = self.setReward([arrive_1, arrive_2], [r1, r2])
         self.n_step += 1
 
         # done, arrive = False, False

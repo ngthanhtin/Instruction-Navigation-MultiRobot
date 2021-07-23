@@ -133,7 +133,6 @@ def main():
                 past_action = a
                 states = state_s
                 one_round_step += 1
-                print(one_round_step)
 
                 # if arrive_s:
                 #     print('Step: %3i' % one_round_step, '| Var: %.2f' % var, '| Time step: %i' % time_step, '|', result)
