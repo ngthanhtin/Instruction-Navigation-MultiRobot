@@ -7,7 +7,8 @@ import numpy as np
 import tensorflow as tf
 # from ddpg import *
 from mddpg.magent import *
-from tworobot_environment import Env
+# from tworobot_environment import Env
+from tworobot_environment_getobjects import Env
 from pathlib import Path
 import argparse
 
