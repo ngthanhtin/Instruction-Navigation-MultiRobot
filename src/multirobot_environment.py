@@ -107,7 +107,7 @@ class Env():
         self.n_step = 0
 
         #---------OBJECTS------------------#
-        self.model_names = ["coke_can", "Mailbox", "cafe_table", "bookshelf", "first_2015_trash_can"]
+        self.model_names = ["car_wheel", "cricket_ball", "beer", "cardboard_box", "first_2015_trash_can"]
         self.object_positions = []
         data = None
         while data is None:
