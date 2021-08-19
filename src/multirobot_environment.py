@@ -39,13 +39,16 @@ class SingleRobot():
         self.pub_cmd_vel = rospy.Publisher(robot_name + '/cmd_vel', Twist, queue_size=10)
         self.sub_odom = rospy.Subscriber(robot_name + '/odom', Odometry, self.getOdometry)
 
-        # assign original position for later respawn
-        self.original_position = self.position
-        # get goal distance
-        self.goal_distance = self.getGoalDistace()
+        #  Original position for later respawn
+        self.original_position = None
 
     def getOdometry(self, odom):
         self.position = odom.pose.pose.position
+        if self.original_position == None:
+            self.original_position = self.position
+        # get goal distance
+        self.goal_distance = self.getGoalDistace()
+
         orientation = odom.pose.pose.orientation
         q_x, q_y, q_z, q_w = orientation.x, orientation.y, orientation.z, orientation.w
         yaw = round(math.degrees(math.atan2(2 * (q_x * q_y + q_w * q_z), 1 - 2 * (q_y * q_y + q_z * q_z))))
@@ -153,9 +156,9 @@ class Env():
         self.test_goals_id = 0
         self.is_training = is_training
         if self.is_training:
-            self.threshold_arrive = 0.2
+            self.threshold_arrive = 0.6
         else:
-            self.threshold_arrive = 0.4
+            self.threshold_arrive = 0.8
 
         #------------ROBOTS----------------#
         self.agents = []
@@ -311,7 +314,7 @@ class Env():
                 reward = 120.
                 agent.pub_cmd_vel.publish(Twist())
                 
-                self.goal_distance = agent.getGoalDistace()
+                agent.goal_distance = agent.getGoalDistace()
                 arrive = False
 
             die_s[i] = die
