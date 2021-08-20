@@ -1,0 +1,37 @@
+[
+    {
+        "instruction": "Go to the wheel", 
+        "targets": [
+            "car_wheel"
+        ], 
+        "description": "car_wheel"
+    }, 
+    {
+        "instruction": "Go to the ball", 
+        "targets": [
+            "cricket_ball"
+        ], 
+        "description": "cricket_ball"
+    }, 
+    {
+        "instruction": "Go to the beer", 
+        "targets": [
+            "beer"
+        ], 
+        "description": "beer"
+    }, 
+    {
+        "instruction": "Go to the box", 
+        "targets": [
+            "cardboard_box"
+        ], 
+        "description": "cardboard_box"
+    }, 
+    {
+        "instruction": "Go to the trash", 
+        "targets": [
+            "first_2015_trash_can"
+        ], 
+        "description": "first_2015_trash_can"
+    }
+]
