@@ -8,7 +8,8 @@ import tensorflow as tf
 # from ddpg import *
 from mddpg.magent import *
 # from tworobot_environment import Env
-from tworobot_environment_getobjects import Env
+# from tworobot_environment_getobjects import Env
+from multirobot_environment import Env
 from pathlib import Path
 import argparse
 
@@ -48,7 +49,8 @@ def main():
     trained_models_dir = './src/trained_models/bl-' + env_name + '-models/' if not args.visual_obs else \
             './src/trained_models/vis_obs-' + env_name + '-models/'
 
-    env = Env(is_training, args.env_id, args.test_env_id, args.visual_obs, args.n_scan)
+    # env = Env(is_training, args.env_id, args.test_env_id, args.visual_obs, args.n_scan)
+    env = Env(is_training, args.env_id, args.test_env_id, 2, args.visual_obs, args.n_scan)
     
     # agent = DDPG(env, state_dim, action_dim, trained_models_dir)
     lr_actor = 1e-4
