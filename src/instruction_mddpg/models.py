@@ -4,6 +4,8 @@ import torch.nn.functional as F
 import numpy as np
 from torchsummary import summary
 
+from fusion_model import GatedAttention
+
 torch.manual_seed(999)
 
 def hidden_init(layer):
@@ -27,7 +29,7 @@ class ActorNetwork(nn.Module):
         self.fc2 = nn.Linear(64, 128)
         self.fc3 = nn.Linear(128, action_dim)
         self.reset_parameters()
-
+        self.fusion_model = GatedAttention(state_dim, instruction_dim, state_dim)
     def reset_parameters(self):
         """
         Initialize parameters
@@ -38,11 +40,15 @@ class ActorNetwork(nn.Module):
 
     def forward(self, x, y):
         """
-        x: image
+        x: image and [dis, yaw, theta, angle]
         y: instruction
         Maps state to actions
         """
-        x = F.relu(self.fc1(x))
+        image, others = x[0], x[1]
+        attention = self.fusion_model(image, y)
+        rep = torch.cat((attention, others), dim=1)
+
+        x = F.relu(self.fc1(rep))
         x = F.relu(self.fc2(x))
         return F.tanh(self.fc3(x))
 
@@ -65,6 +71,7 @@ class CriticNetwork(nn.Module):
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, 1)
         self.reset_parameters()
+        self.fusion_model = GatedAttention(state_dim, instruction_dim, state_dim)
 
     def reset_parameters(self):
         """
