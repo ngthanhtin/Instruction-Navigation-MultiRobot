@@ -12,7 +12,7 @@ from torch.nn.utils.clip_grad import clip_grad_norm_
 
 device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
 
-class MaSacAgent:
+class MSAC:
     def __init__(
         self, 
         state_dim, 
@@ -25,7 +25,7 @@ class MaSacAgent:
         policy_update_fequency: int=2,
         num_agents: int=2):
 
-        self.action_dim = self.action_dim
+        self.action_dim = action_dim
         self.state_dim = state_dim
         self.num_agents = num_agents
         
@@ -166,7 +166,7 @@ class MaSacAgent:
             self.vf_target.parameters(), self.vf.parameters()
         ):
             t_param.data.copy_( tau * l_param.data + (1.0 - tau) * t_param.data)
-            
+
     def train(self, num_episode: int, max_iteration: int=1000, plotting_interval: int=400):
         self.is_test = False
 
