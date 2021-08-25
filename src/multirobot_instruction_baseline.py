@@ -172,7 +172,7 @@ def main():
 
             if len(total_rewards) >= 100:                       # record avg score for the latest 100 steps
                 latest_avg_score = sum(total_rewards[(len(total_rewards)-100):]) / 100
-                print("100 Episodic Everage Score: {:.4f}".format(latest_avg_score))
+                print("100 Episodic Average Score: {:.4f}".format(latest_avg_score))
                 avg_scores.append(latest_avg_score)
             
                 # if max_avg_score <= latest_avg_score:           # record better results
