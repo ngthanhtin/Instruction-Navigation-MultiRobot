@@ -8,3 +8,7 @@ __pycache__/
 frames/
 *.avi
 *dae
+.catkin_tools/
+.catkin_workspace
+build/
+devel/
