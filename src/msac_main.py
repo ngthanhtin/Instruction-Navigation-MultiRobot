@@ -22,7 +22,17 @@ def write_to_csv(item, file_name):
     with open(file_name, 'a') as f:
         f.write("%s\n" % item)
 
+def seed_torch(seed):
+    torch.manual_seed = seed
+    if torch.backends.cudnn.enabled:
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True
+
 def train(args):
+    seed = 777
+    np.random.seed(seed)
+    seed_torch(seed)
+    
     rospy.init_node('MSAC TRAINING')
 
     is_training = bool(args.train)
