@@ -4,7 +4,7 @@ from gazebo_msgs.msg import ModelStates
 import math
 import numpy as np
 from msac.msac_agent import *
-from multirobot_environment import Env
+from environments.multirobot_environment import Env
 from pathlib import Path
 import argparse
 
@@ -32,7 +32,7 @@ def train(args):
     seed = 777
     np.random.seed(seed)
     seed_torch(seed)
-    
+
     rospy.init_node('MSAC TRAINING')
 
     is_training = bool(args.train)

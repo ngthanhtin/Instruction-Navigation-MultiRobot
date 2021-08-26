@@ -4,9 +4,9 @@ from gazebo_msgs.msg import ModelStates
 import math
 #import gym
 import numpy as np
-import tensorflow as tf
-from ddpg import *
-from environment import Env
+
+from sddpg.ddpg import *
+from environments.environment import Env
 from pathlib import Path
 import argparse
 
