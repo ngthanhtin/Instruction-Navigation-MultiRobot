@@ -14,3 +14,5 @@ build/
 devel/
 src/turtlebot3
 src/turtlebot3_simulations
+src/model_weight/*
+src/test_pandas.py

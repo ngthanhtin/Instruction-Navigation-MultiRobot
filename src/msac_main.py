@@ -44,7 +44,6 @@ def train(args):
     print('Action Dimensions: ' + str(action_dim))
     print('Action Max: ' + str(action_linear_max) + ' m/s and ' + str(action_angular_max) + ' rad/s')
 
-    
     print('Training mode')
 
     total_rewards = []
@@ -105,7 +104,7 @@ def train(args):
 
         if max_score <= episode_score:                     
             max_score = episode_score
-            agent.save('./tworobot_weights.pth')
+            agent.save('./model_weight/msac/tworobot_weights.pth')
 
         if len(total_rewards) >= 100:                       # record avg score for the latest 100 steps
             latest_avg_score = sum(total_rewards[(len(total_rewards)-100):]) / 100
@@ -113,10 +112,10 @@ def train(args):
             avg_scores.append(latest_avg_score)
         
 
-        torch.save(agent.actor.state_dict(), "model_weight/mactor.pt")
-        torch.save(agent.qf1.state_dict(), "model_weight/mqf1.pt")
-        torch.save(agent.qf2.state_dict(), "model_weight/mqf2.pt")
-        torch.save(agent.vf.state_dict(), "model_weight/mvf.pt")
+        torch.save(agent.actor.state_dict(), "model_weight/msac/mactor.pt")
+        torch.save(agent.qf1.state_dict(), "model_weight/msac/mqf1.pt")
+        torch.save(agent.qf2.state_dict(), "model_weight/msac/mqf2.pt")
+        torch.save(agent.vf.state_dict(), "model_weight/msac/mvf.pt")
 
 def test(args):
     rospy.init_node('MSAC TESTING')
@@ -145,9 +144,6 @@ def test(args):
     total_path_len = 0.
     arrive_cnt = 0
     robot_name='turtlebot3_burger_1'
-    # robot_name = 'robot1'
-
-    
 
     while True:
         done = False
