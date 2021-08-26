@@ -7,9 +7,8 @@ from mddpg.mddpg_agent import *
 
 from environments.multirobot_environment import Env
 from pathlib import Path
-import argparse
+import argparse, os
 
-# import os
 # os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
 # os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
@@ -33,12 +32,13 @@ def train(args):
     np.random.seed(args.seed)
     seed_torch(args.seed)
 
-    rospy.init_node('TRAINING MULTI-AGENT DDPG')
+    rospy.init_node('MDDPG')
 
     is_training = True
-    env_name = 'env' + str(args.env_id)
-    trained_models_dir = './src/trained_models/bl-' + env_name + '-models/' if not args.visual_obs else \
-            './src/trained_models/vis_obs-' + env_name + '-models/'
+
+    trained_models_dir = './src/model_weights/mddpg/'
+    if not os.path.isdir(trained_models_dir):
+        os.makedirs(trained_models_dir)
 
     env = Env(is_training, args.env_id, args.test_env_id, args.num_agents, args.visual_obs, args.n_scan)
 
@@ -51,13 +51,6 @@ def train(args):
     print('Action Max: ' + str(action_linear_max) + ' m/s and ' + str(action_angular_max) + ' rad/s')
 
     print('Training mode')
-    # path things
-    figures_path = './figures/bl-' + env_name + '/' if not args.visual_obs else \
-        './figures/vis_obs-' + env_name + '/'
-    print(figures_path)
-    Path(trained_models_dir + 'actor').mkdir(parents=True, exist_ok=True)
-    Path(trained_models_dir + 'critic').mkdir(parents=True, exist_ok=True)
-    Path(figures_path).mkdir(parents=True, exist_ok=True)
 
     threshold_init = 20
     worsen_tolerance = 0
@@ -91,19 +84,19 @@ def train(args):
                 result = 'Fail'
 
             
-            if agent.total_step > 0:
-                total_reward += r
-                ep_ret += r
-            print("Timestep: ",agent.total_step)
-            if agent.total_step % 10000 == 0 and agent.total_step > 0:
-                print('---------------------------------------------------')
-                avg_reward = total_reward / 10000
-                print('Average_reward = ', avg_reward)
-                avg_reward_his.append(round(avg_reward, 2))
-                print('Average Reward:',avg_reward_his)
-                total_reward = 0
-                print('Mean episode return over training time step: {:.2f}'.format(np.mean(ep_rets)))
-                print('Mean episode return over current 10k training time step: {:.2f}'.format(np.mean(ep_rets[-10:])))
+            # if agent.total_step > 0:
+            #     total_reward += r
+            #     ep_ret += r
+            # print("Timestep: ",agent.total_step)
+            # if agent.total_step % 10000 == 0 and agent.total_step > 0:
+            #     print('---------------------------------------------------')
+            #     avg_reward = total_reward / 10000
+            #     print('Average_reward = ', avg_reward)
+            #     avg_reward_his.append(round(avg_reward, 2))
+            #     print('Average Reward:',avg_reward_his)
+            #     total_reward = 0
+            #     print('Mean episode return over training time step: {:.2f}'.format(np.mean(ep_rets)))
+            #     print('Mean episode return over current 10k training time step: {:.2f}'.format(np.mean(ep_rets[-10:])))
             #     write_to_csv(np.mean(ep_rets), figures_path + 'mean_ep_ret_his.csv')
             #     write_to_csv(np.mean(ep_rets[-10:]), figures_path + 'mean_ep_ret_10k_his.csv')
             #     write_to_csv(avg_reward, figures_path + 'avg_reward_his.csv')
@@ -140,7 +133,7 @@ def train(args):
 
         if max_score <= episode_score:                     
             max_score = episode_score
-            agent.save('./model_weight/mddpg/tworobot_weights.pth')
+            agent.save( trained_models_dir + './tworobot_weights.pth')
 
         if len(total_reward) >= 100:                       # record avg score for the latest 100 steps
             latest_avg_score = sum(total_reward[(len(total_reward)-100):]) / 100
@@ -154,7 +147,7 @@ def train(args):
                 if max_avg_score > 0.5:                     
                     worsen_tolerance -= 1                   # count worsening counts
                     print("Loaded from last best model.")
-                    agent.load('./model_weight/mddpg/tworobot_weights.pth')             # continue from last best-model
+                    agent.load(trained_models_dir + '/tworobot_weights.pth')             # continue from last best-model
                 if worsen_tolerance <= 0:                   # earliy stop training
                     print("Early Stop Training.")
                     break

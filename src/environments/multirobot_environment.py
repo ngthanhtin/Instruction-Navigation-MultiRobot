@@ -203,6 +203,16 @@ class Env():
                     scan_range.append(scan.ranges[n_i])
 
             if min_range > min(scan_range) > 0: #collide
+                current_distance = math.hypot(agent.goal_position.position.x - agent.position.x, agent.goal_position.position.y - agent.position.y)
+
+                agent_object_dists = []
+                for k, obj_name in enumerate(self.model_names):
+                    agent_object_dists.append(math.hypot(self.object_positions[k][0] - agent.position.x, self.object_positions[k][1] - agent.position.y))
+
+                index_min = agent_object_dists.index(min(agent_object_dists))
+                if index_min == self.object_target_id:
+                    arrive = True
+
                 die = True
                 model_state = ModelState()
                 model_state.model_name = agent.model_name
@@ -214,10 +224,8 @@ class Env():
                 # Respawn the robot
                 self.gazebo_model_state_service(model_state)
 
+            # re-calculate the distance
             current_distance = math.hypot(agent.goal_position.position.x - agent.position.x, agent.goal_position.position.y - agent.position.y)
-            if current_distance <= self.threshold_arrive:
-                # done = True
-                arrive = True
 
             obs = None
             if self.visual_obs:
