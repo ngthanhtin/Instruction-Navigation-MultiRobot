@@ -3,13 +3,15 @@ from typing import Dict, List, Deque, Tuple
 from collections import deque
 import numpy as np
 from collections import deque, namedtuple
+import random
+import torch
 
 class ReplayBuffer:
     """
     Fixed-size buffer to store experience tuples.
     """
 
-    def __init__(self, action_size, instruction_size, buffer_size, batch_size, seed):
+    def __init__(self, action_size, buffer_size, batch_size, seed):
         """
         Initialize a ReplayBuffer object.
         
@@ -17,17 +19,16 @@ class ReplayBuffer:
         :batch_size (int): size of each training batch
         """
         self.action_size = action_size
-        self.instruction_size = instruction_size
         self.memory = deque(maxlen=buffer_size)  # internal memory (deque)
         self.batch_size = batch_size
-        self.experience = namedtuple("Experience", field_names=["state", "instruction", "action", "reward", "next_state", "next_instruction", "done"])
+        self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
         self.seed = random.seed(seed)
     
-    def add(self, state, instruction, action, reward, next_state, next_instruction, done):
+    def add(self, state, action, reward, next_state, done):
         """
         Add a new experience to memory.
         """
-        e = self.experience(state, instruction, action, reward, next_state, next_instruction, done)
+        e = self.experience(state, action, reward, next_state, done)
         self.memory.append(e)
     
     def sample(self):
@@ -36,15 +37,13 @@ class ReplayBuffer:
         """
         experiences = random.sample(self.memory, k=self.batch_size)
 
-        states = torch.from_numpy(np.vstack([e.state for e in experiences if e is not None])).float().to(device)
-        instructions = torch.from_numpy(np.vstack([e.instruction for e in experiences if e is not None])).float().to(device)
-        actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).float().to(device)
-        rewards = torch.from_numpy(np.vstack([e.reward for e in experiences if e is not None])).float().to(device)
-        next_states = torch.from_numpy(np.vstack([e.next_state for e in experiences if e is not None])).float().to(device)
-        next_instructions = torch.from_numpy(np.vstack([e.next_instruction for e in experiences if e is not None])).float().to(device)
-        dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float().to(device)
+        states = np.vstack([e.state for e in experiences if e is not None])
+        actions = np.vstack([e.action for e in experiences if e is not None])
+        rewards = np.vstack([e.reward for e in experiences if e is not None])
+        next_states = np.vstack([e.next_state for e in experiences if e is not None])
+        dones = np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)
 
-        return (states, instructions, actions, rewards, next_states, next_instructions, dones)
+        return (states, actions, rewards, next_states, dones)
     
     def is_ready(self):
         return len(self.memory) > self.batch_size

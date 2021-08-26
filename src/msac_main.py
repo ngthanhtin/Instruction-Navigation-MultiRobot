@@ -12,7 +12,6 @@ import argparse
 # os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
 # os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
-exploration_decay_start_step = 50000
 state_dim = 16
 action_dim = 2
 action_linear_max = 0.25  # m/s
@@ -90,15 +89,16 @@ def train(args):
             past_action = a
             states = state_s
 
-            if (
-                len(agent.memory) > batch_size
-            and agent.total_step > initial_random_steps):
+            if (len(agent.memory) > batch_size and agent.total_step > initial_random_steps):
                 loss = agent.update_model()
                 actor_losses.append(loss[0])
                 qf_losses.append(loss[1])
                 v_losses.append(loss[2])
                 alpha_losses.append(loss[3])
             
+            if agent.total_step % 5 == 0 and agent.total_step > initial_random_steps:
+                var *= 0.9999
+
             if np.any(dones):
                 break
 
@@ -276,7 +276,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch-size', type=int, default=128, help='Batch size')
     parser.add_argument('--gamma', type=float, default=0.99, help='gamma')
     parser.add_argument('--tau', type=float, default=1e-3, help='tau for soft update')
-    parser.add_argument('--initial-random-steps', type=int, default=int(1e2), help="initital random steps")
+    parser.add_argument('--initial-random-steps', type=int, default=int(1e2), help="initital Exploration steps")
     parser.add_argument('--policy_update_fequency', type=int, default=2, help='policy update frequency')
 
     #device
