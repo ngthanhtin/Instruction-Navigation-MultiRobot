@@ -120,6 +120,11 @@ Training in the training environment id 2 with camera
 ```
 python src/tworobot_baseline.py --visual_obs 1 --train 1 --env_id 2
 ```
+
+```
+python src/mddpg_main.py --visual_obs 1 --train 1 --env_id 2
+```
+
 Testing above training models in the testing environment id 2
 ```
 python src/baseline.py --visual_obs 1 --train 0 --env_id 2 --test_env_id 2
