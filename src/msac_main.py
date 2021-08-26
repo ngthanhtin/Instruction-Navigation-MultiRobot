@@ -28,9 +28,8 @@ def seed_torch(seed):
         torch.backends.cudnn.deterministic = True
 
 def train(args):
-    seed = 777
-    np.random.seed(seed)
-    seed_torch(seed)
+    np.random.seed(args.seed)
+    seed_torch(args.seed)
 
     rospy.init_node('MSAC TRAINING')
 
@@ -128,6 +127,9 @@ def train(args):
         torch.save(agent.vf.state_dict(), "model_weight/msac/mvf.pt")
 
 def test(args):
+    np.random.seed(args.seed)
+    seed_torch(args.seed)
+    
     rospy.init_node('MSAC TESTING')
 
     is_training = bool(args.train)
@@ -280,6 +282,7 @@ if __name__ == '__main__':
 
     #device
     parser.add_argument('--device', type=str, default='cpu', help='Which devices to use, cuda or cpu')
+    parser.add_argument('--seed', type=int, default=777, help='random seed')
     args = parser.parse_args()
 
     train(args)
