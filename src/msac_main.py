@@ -33,7 +33,7 @@ def train(args):
 
     rospy.init_node('MSAC TRAINING')
 
-    is_training = bool(args.train)
+    is_training = True
     env = Env(is_training, args.env_id, args.test_env_id, args.num_agents, args.visual_obs, args.n_scan)
     
     replay_buff_size = args.buffer_size
@@ -129,10 +129,10 @@ def train(args):
 def test(args):
     np.random.seed(args.seed)
     seed_torch(args.seed)
-    
+
     rospy.init_node('MSAC TESTING')
 
-    is_training = bool(args.train)
+    is_training = False
 
     env = Env(is_training, args.env_id, args.test_env_id, args.num_agents, args.visual_obs, args.n_scan)
     
