@@ -265,7 +265,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--train', type=int, default=0, help='1 for training and 0 for testing')
     parser.add_argument('--env_id', type=int, default=2, help='env name')
-    parser.add_argument('--sac', type=int, default=0, help='1 for using sac')
     parser.add_argument('--visual_obs', type=int, default=0, help='1 for using image at robot observation')
     parser.add_argument('--test_env_id', type=int, default=2, help='test environment id')
     parser.add_argument('--n_scan', type=int, default=10, help='num of scan sampled from full scan')
