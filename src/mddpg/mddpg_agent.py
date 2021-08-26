@@ -20,7 +20,8 @@ class MADDPG:
 
         agent = DDPGAgent(state_dim, action_dim, lr_actor, lr_critic, lr_decay, replay_buff_size, gamma, batch_size, random_seed, soft_update_tau)
         self.adversarial_agents = [agent, agent]     # the agent self-plays with itself
-        
+        self.total_step = 0
+
     def get_actors(self):
         """
         get actors of all the agents in the MADDPG object
@@ -140,6 +141,11 @@ class DDPGAgent:
         
         experiences = self.memory.sample()
         states, actions, rewards, next_states, dones = experiences
+        states = torch.from_numpy(states).float().to(device)
+        actions = torch.from_numpy(actions).float().to(device)
+        rewards = torch.from_numpy(rewards).float().to(device)
+        next_states = torch.from_numpy(next_states).float().to(device)
+        dones = torch.from_numpy(dones.astype(np.uint8)).float().to(device)
 
         # ---------------------------- update critic ---------------------------- #
         # Get predicted next-state actions and Q values from target models
