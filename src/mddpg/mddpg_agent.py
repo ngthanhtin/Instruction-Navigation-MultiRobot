@@ -15,11 +15,12 @@ class MADDPG:
     """
     The Multi-Agent consisting of two DDPG Agents
     """
-    def __init__(self, state_dim, action_dim, lr_actor, lr_critic, lr_decay, replay_buff_size, gamma, batch_size, random_seed, soft_update_tau):
+    def __init__(self, state_dim, action_dim, num_agents, replay_buff_size, gamma, batch_size, random_seed, soft_update_tau):
         super(MADDPG, self).__init__()
 
-        agent = DDPGAgent(state_dim, action_dim, lr_actor, lr_critic, lr_decay, replay_buff_size, gamma, batch_size, random_seed, soft_update_tau)
-        self.adversarial_agents = [agent, agent]     # the agent self-plays with itself
+        self.num_agents = num_agents
+        agent = DDPGAgent(state_dim, action_dim, replay_buff_size, gamma, batch_size, random_seed, soft_update_tau)
+        self.adversarial_agents = [agent for i in range(num_agents)]
         self.total_step = 0
 
     def get_actors(self):
@@ -93,9 +94,6 @@ class DDPGAgent:
     def __init__(self,
                  state_dim,
                  action_dim,
-                 lr_actor = 1e-4,
-                 lr_critic = 1e-4,
-                 lr_decay = .95,
                  replay_buff_size = 10000,
                  gamma = .99,
                  batch_size = 128,
@@ -105,19 +103,17 @@ class DDPGAgent:
         """
         Initialize model
         """
-        self.lr_actor = lr_actor
         self.gamma = gamma
-        self.lr_critic = lr_critic
-        self.lr_decay = lr_decay
+        self.lr_decay = 0.95
         self.tau = soft_update_tau
         
         self.actor_local = ActorNetwork(state_dim, action_dim).to(device=device)
         self.actor_target = ActorNetwork(state_dim, action_dim).to(device=device)
-        self.actor_optimizer = optim.Adam(self.actor_local.parameters(), lr=self.lr_actor)
+        self.actor_optimizer = optim.Adam(self.actor_local.parameters(), lr=1e-4)
         
         self.critic_local = CriticNetwork(state_dim, action_dim).to(device=device)
         self.critic_target = CriticNetwork(state_dim, action_dim).to(device=device)
-        self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr=self.lr_critic)
+        self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr=1e-4)
         
         self.noise = OUNoise(action_dim, random_seed)
         

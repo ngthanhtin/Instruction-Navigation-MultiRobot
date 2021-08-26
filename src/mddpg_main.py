@@ -23,31 +23,27 @@ def write_to_csv(item, file_name):
     with open(file_name, 'a') as f:
         f.write("%s\n" % item)
 
-
+def seed_torch(seed):
+    torch.manual_seed = seed
+    if torch.backends.cudnn.enabled:
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True
 
 def train(args):
+    np.random.seed(args.seed)
+    seed_torch(args.seed)
+
     rospy.init_node('TRAINING MULTI-AGENT DDPG')
 
-    is_training = bool(args.train)
+    is_training = True
     env_name = 'env' + str(args.env_id)
     trained_models_dir = './src/trained_models/bl-' + env_name + '-models/' if not args.visual_obs else \
             './src/trained_models/vis_obs-' + env_name + '-models/'
 
-    # env = Env(is_training, args.env_id, args.test_env_id, args.visual_obs, args.n_scan)
-    env = Env(is_training, args.env_id, args.test_env_id, 2, args.visual_obs, args.n_scan)
-    
-    # agent = DDPG(env, state_dim, action_dim, trained_models_dir)
-    lr_actor = 1e-4
-    lr_critic = 1e-4
-    lr_decay = .95
-    replay_buff_size = 10000
-    gamma = .99
-    batch_size = 128
-    random_seed = 42
-    soft_update_tau = 1e-3
+    env = Env(is_training, args.env_id, args.test_env_id, args.num_agents, args.visual_obs, args.n_scan)
 
-    # 2 agents
-    agent = MADDPG(state_dim, action_dim, lr_actor, lr_critic, lr_decay, replay_buff_size, gamma, batch_size, random_seed, soft_update_tau)
+    # agents
+    agent = MADDPG(state_dim, action_dim, args.num_agents, args.buffer_size, args.gamma, args.batch_size, args.seed, args.tau)
 
     past_action = np.array([[0., 0.], [0., 0.]])
     print('State Dimensions: ' + str(state_dim))
@@ -164,6 +160,9 @@ def train(args):
                     break
 
 def test(args):
+    np.random.seed(args.seed)
+    seed_torch(args.seed)
+
     print('Testing mode')
     total_return = 0.
     total_step = 0
@@ -173,32 +172,22 @@ def test(args):
     # robot_name = 'robot1'
 
 
-    is_training = bool(args.train)
+    is_training = False
     env_name = 'env' + str(args.env_id)
     trained_models_dir = './src/trained_models/bl-' + env_name + '-models/' if not args.visual_obs else \
             './src/trained_models/vis_obs-' + env_name + '-models/'
 
-    # env = Env(is_training, args.env_id, args.test_env_id, args.visual_obs, args.n_scan)
-    env = Env(is_training, args.env_id, args.test_env_id, 2, args.visual_obs, args.n_scan)
     
-    # agent = DDPG(env, state_dim, action_dim, trained_models_dir)
-    lr_actor = 1e-4
-    lr_critic = 1e-4
-    lr_decay = .95
-    replay_buff_size = 10000
-    gamma = .99
-    batch_size = 128
-    random_seed = 42
-    soft_update_tau = 1e-3
+    env = Env(is_training, args.env_id, args.test_env_id, args.num_agents, args.visual_obs, args.n_scan)
 
     # 2 agents
-    agent = MADDPG(state_dim, action_dim, lr_actor, lr_critic, lr_decay, replay_buff_size, gamma, batch_size, random_seed, soft_update_tau)
+    agent = MADDPG(state_dim, action_dim, args.num_agents, args.buffer_size, args.gamma, args.batch_size, args.seed, args.tau)
 
     past_action = np.array([[0., 0.], [0., 0.]])
     print('State Dimensions: ' + str(state_dim))
     print('Action Dimensions: ' + str(action_dim))
     print('Action Max: ' + str(action_linear_max) + ' m/s and ' + str(action_angular_max) + ' rad/s')
-    
+
     while True:
         state = env.reset()
         
@@ -280,6 +269,10 @@ if __name__ == '__main__':
 
     #device
     parser.add_argument('--device', type=str, default='cpu', help='Which devices to use, cuda or cpu')
+    parser.add_argument('--seed', type=int, default=777, help='random seed')
     args = parser.parse_args()
 
-    train(args)
+    if args.train == 1:
+        train(args)
+    else:
+        test(args)
