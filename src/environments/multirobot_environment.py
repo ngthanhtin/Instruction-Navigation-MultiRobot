@@ -209,7 +209,7 @@ class Env():
                     agent_object_dists.append(math.hypot(self.object_positions[k][0] - agent.position.x, self.object_positions[k][1] - agent.position.y))
 
                 index_min = agent_object_dists.index(min(agent_object_dists))
-                if index_min == self.object_target_id:
+                if index_min == self.object_target_id and min(agent_object_dists) <= min_range*2:
                     print("Arrive!!!")
                     arrive = True
 
@@ -311,9 +311,9 @@ class Env():
             # assign position
             model_state.pose.position.x = self.goal_position.position.x
             model_state.pose.position.y = self.goal_position.position.y
-            model_state.pose.position.z = self.goal_position.position.z 
             # Respawn the target
             self.gazebo_model_state_service(model_state)
+            print("respawn target + ", is_reset)
 
     def setEachReward(self, die_s, arrive_s):
         reward_s = []
@@ -339,10 +339,7 @@ class Env():
                 agent.pub_cmd_vel.publish(Twist())
                 
                 agent.goal_distance = agent.getGoalDistace()
-                arrive = False
 
-            die_s[i] = die
-            arrive_s[i] = arrive
             reward_s.append(reward)
 
         return reward_s
@@ -413,6 +410,7 @@ class Env():
         # Reset goal if collided
         if sum(arrive_s) == 1:
             self.createGoal(is_reset=False)
+            print("Create Goal without reseting")
         
         # return np.asarray(state), reward, done, arrive
         return state_s, r_s, die_s, arrive_s
