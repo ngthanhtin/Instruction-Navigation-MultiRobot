@@ -119,14 +119,6 @@ class Env():
             model_state = data.pose[data.name.index(model_name)].position
             self.object_positions.append((model_state.x, model_state.y))
 
-        #-----------GOAL-------------#
-        self.goal_position = Pose()
-
-        self.object_target_id = np.random.randint(len(self.model_names))
-        self.goal_position.position.x = self.object_positions[self.object_target_id][0]
-        self.goal_position.position.y = self.object_positions[self.object_target_id][1]
-
-
         #--------------------------------#
         self.reset_proxy = rospy.ServiceProxy('gazebo/reset_simulation', Empty)
         self.unpause_proxy = rospy.ServiceProxy('gazebo/unpause_physics', Empty)
@@ -159,6 +151,13 @@ class Env():
             self.threshold_arrive = 0.6
         else:
             self.threshold_arrive = 0.8
+
+        #-----------GOAL-------------#
+        self.goal_position = Pose()
+
+        self.object_target_id = np.random.randint(len(self.model_names))
+        self.goal_position.position.x = self.object_positions[self.object_target_id][0]
+        self.goal_position.position.y = self.object_positions[self.object_target_id][1]
 
         #------------ROBOTS----------------#
         self.agents = []
@@ -211,6 +210,7 @@ class Env():
 
                 index_min = agent_object_dists.index(min(agent_object_dists))
                 if index_min == self.object_target_id:
+                    print("Arrive!!!")
                     arrive = True
 
                 die = True
@@ -265,39 +265,55 @@ class Env():
         """
         is_reset: reset or is running in an episode
         """
-        # build new target
-        rospy.wait_for_service('/gazebo/delete_model')
-        self.del_model('target')
 
-        # Build the target
-        rospy.wait_for_service('/gazebo/spawn_sdf_model')
-        try:
-            goal_urdf = open(goal_model_dir, "r").read()
-            target = SpawnModel
-            target.model_name = 'target'  # the same with sdf name
-            target.model_xml = goal_urdf
-            if self.is_training:
+        if self.is_training:
                 self.object_target_id = np.random.randint(len(self.model_names))
                 self.goal_position.position.x = self.object_positions[self.object_target_id][0]
                 self.goal_position.position.y = self.object_positions[self.object_target_id][1]
-            else:
-                if is_reset:
+                #update goal position
+                for i in range(self.num_agents):
+                    self.agents[i].goal_position = self.goal_position
+                
+        else:
+            if is_reset:
+                self.goal_position.position.x, self.goal_position.position.y = self.test_goals[self.test_goals_id]
+            else:  
+                self.test_goals_id += 1
+                if self.test_goals_id >= len(self.test_goals):
+                    pass
+                    #print('FINISHED!!!')
+                    #exit(0)
+                else:
                     self.goal_position.position.x, self.goal_position.position.y = self.test_goals[self.test_goals_id]
-                else:  
-                    self.test_goals_id += 1
-                    if self.test_goals_id >= len(self.test_goals):
-                        pass
-                        #print('FINISHED!!!')
-                        #exit(0)
-                    else:
-                        self.goal_position.position.x, self.goal_position.position.y = self.test_goals[self.test_goals_id]
 
-            self.goal(target.model_name, target.model_xml, 'namespace', self.goal_position, 'world')
+        if is_reset:
+            # build new target, only spawn in the beginning of the episode
+            rospy.wait_for_service('/gazebo/delete_model')
+            self.del_model('target')
 
-        except (rospy.ServiceException) as e:
-            print("/gazebo/failed to build the target")
-        rospy.wait_for_service('/gazebo/unpause_physics')
+            # Build the target
+            rospy.wait_for_service('/gazebo/spawn_sdf_model')
+            try:
+                goal_urdf = open(goal_model_dir, "r").read()
+                target = SpawnModel
+                target.model_name = 'target'  # the same with sdf name
+                target.model_xml = goal_urdf
+                
+                self.goal(target.model_name, target.model_xml, 'namespace', self.goal_position, 'world')
 
+            except (rospy.ServiceException) as e:
+                print("/gazebo/failed to build the target")
+            rospy.wait_for_service('/gazebo/unpause_physics')
+        else:
+            # only need to re-set target model state
+            model_state = ModelState()
+            model_state.model_name = 'target'
+            # assign position
+            model_state.pose.position.x = self.goal_position.position.x
+            model_state.pose.position.y = self.goal_position.position.y
+            model_state.pose.position.z = self.goal_position.position.z 
+            # Respawn the target
+            self.gazebo_model_state_service(model_state)
 
     def setEachReward(self, die_s, arrive_s):
         reward_s = []
