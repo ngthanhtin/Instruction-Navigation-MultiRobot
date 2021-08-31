@@ -97,6 +97,7 @@ source ~/catkin_ws/devel/setup.bash
 - Launching a turtlebot to the training world, e.g:
 ```
 roslaunch turtlebot3_gazebo train_env2.launch
+roslaunch turtlebot3_gazebo train_easy_nlp.launch
 ```
 - or Launching a turtlebot to the testing world, e.g:
 ```

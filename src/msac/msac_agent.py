@@ -6,8 +6,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
-from buffer import ReplayBuffer
-from mactor_critic import Actor, CriticQ, CriticV
+from msac.buffer import ReplayBuffer
+from msac.mactor_critic import Actor, CriticQ, CriticV
 from torch.nn.utils.clip_grad import clip_grad_norm_
 
 device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
@@ -25,11 +25,11 @@ class MSAC:
         policy_update_fequency: int=2,
         num_agents: int=2):
 
-        self.action_dim = action_dim
-        self.state_dim = state_dim
+        self.action_size = action_dim
+        self.state_size = state_dim
         self.num_agents = num_agents
         
-        self.memory = ReplayBuffer(self.state_dim, self.action_dim, memory_size, batch_size)
+        self.memory = ReplayBuffer(self.state_size, self.action_size, memory_size, batch_size)
         self.batch_size = batch_size
         self.memor_size = memory_size
         self.gamma = gamma
