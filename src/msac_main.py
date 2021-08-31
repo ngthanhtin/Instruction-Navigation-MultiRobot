@@ -6,9 +6,8 @@ import numpy as np
 from msac.msac_agent import *
 from environments.multirobot_environment import Env
 from pathlib import Path
-import argparse
+import argparse, os
 
-# import os
 # os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
 # os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
@@ -31,7 +30,11 @@ def train(args):
     np.random.seed(args.seed)
     seed_torch(args.seed)
 
-    rospy.init_node('MSAC TRAINING')
+    rospy.init_node('MSAC')
+
+    trained_models_dir = './src/model_weights/msac/'
+    if not os.path.isdir(trained_models_dir):
+        os.makedirs(trained_models_dir)
 
     is_training = True
     env = Env(is_training, args.env_id, args.test_env_id, args.num_agents, args.visual_obs, args.n_scan)
@@ -66,7 +69,8 @@ def train(args):
     
     while True:
         states = env.reset()
-        score = [0 for _ in range(num_agents)]
+        score = np.zeros(num_agents) 
+        
         
         num_episode = 0
         while True:
@@ -84,7 +88,7 @@ def train(args):
                 agent.transition[i] += [r[i], state_s[i], dones[i]]
                 agent.memory.store(*agent.transition[i])
 
-            scores += np.array(r)
+            score += np.array(r)
             past_action = a
             states = state_s
 
@@ -104,27 +108,27 @@ def train(args):
         scores.append(max(score))
         if num_episode >= 100:
             avg_scores.append(np.mean(scores[-100:]))
-        plot(num_episode, scores, avg_scores, actor_losses, qf_losses, v_losses, alpha_losses)
+        # plot(num_episode, scores, avg_scores, actor_losses, qf_losses, v_losses, alpha_losses)
 
 
         episode_score = np.max(scores)
         total_rewards.append(episode_score)
         print("Score: {:.4f}".format(episode_score))
 
-        if max_score <= episode_score:                     
-            max_score = episode_score
-            agent.save('./model_weight/msac/tworobot_weights.pth')
+        # if max_score <= episode_score:                     
+        #     max_score = episode_score
+        #     agent.save(trained_models_dir + '/tworobot_weights.pth')
 
         if len(total_rewards) >= 100:                       # record avg score for the latest 100 steps
             latest_avg_score = sum(total_rewards[(len(total_rewards)-100):]) / 100
-            print("100 Episodic Everage Score: {:.4f}".format(latest_avg_score))
+            print("100 Episodic Average Score: {:.4f}".format(latest_avg_score))
             avg_scores.append(latest_avg_score)
         
 
-        torch.save(agent.actor.state_dict(), "model_weight/msac/mactor.pt")
-        torch.save(agent.qf1.state_dict(), "model_weight/msac/mqf1.pt")
-        torch.save(agent.qf2.state_dict(), "model_weight/msac/mqf2.pt")
-        torch.save(agent.vf.state_dict(), "model_weight/msac/mvf.pt")
+        torch.save(agent.actor.state_dict(), trained_models_dir + "/mactor.pt")
+        torch.save(agent.qf1.state_dict(), trained_models_dir + "/mqf1.pt")
+        torch.save(agent.qf2.state_dict(), trained_models_dir + "/mqf2.pt")
+        torch.save(agent.vf.state_dict(), trained_models_dir + "/mvf.pt")
 
 def test(args):
     np.random.seed(args.seed)
@@ -146,8 +150,9 @@ def test(args):
     num_agents = args.num_agents
 
     # 2 agents
+    trained_models_dir = './src/model_weights/msac/tworobot_weights.pth'
     agent = MSAC(state_dim, action_dim, replay_buff_size, batch_size, gamma, tau, initial_random_steps, policy_update_frequency, num_agents)
-
+    agent.load_state_dict(torch.load(trained_models_dir))
     
     
     print('Testing mode')
@@ -235,6 +240,12 @@ def plot(
     v_losses: List[float],
     alpha_losses: List[float]
     ):
+
+    #plot dir
+    plot_dir = './src/plots/'
+    if not os.path.isdir(plot_dir):
+        os.makedirs(plot_dir)
+
     plt.figure(figsize=(20, 5))
     plt.subplot(121)
     if len(avg_scores) > 0:
@@ -245,7 +256,9 @@ def plot(
     plt.subplot(122)
     plt.title("episode %s. Score: %s" % (episode, np.mean(scores[-10:])))
     plt.plot(scores)
-    plt.savefig('plots/masac_result.png')
+    
+
+    plt.savefig(plot_dir + '/masac_result.png')
     plt.close()
 
     plt.figure(figsize=(20, 5))
@@ -261,7 +274,7 @@ def plot(
     plt.subplot(144)
     plt.title('alpha loss')
     plt.plot(alpha_losses)
-    plt.savefig('plots/masac_loss.png')
+    plt.savefig(plot_dir + '/masac_loss.png')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -278,7 +291,7 @@ if __name__ == '__main__':
     parser.add_argument('--gamma', type=float, default=0.99, help='gamma')
     parser.add_argument('--tau', type=float, default=1e-3, help='tau for soft update')
     parser.add_argument('--initial-random-steps', type=int, default=int(1e2), help="initital Exploration steps")
-    parser.add_argument('--policy_update_fequency', type=int, default=2, help='policy update frequency')
+    parser.add_argument('--policy-update-frequency', type=int, default=2, help='policy update frequency')
 
     #device
     parser.add_argument('--device', type=str, default='cpu', help='Which devices to use, cuda or cpu')

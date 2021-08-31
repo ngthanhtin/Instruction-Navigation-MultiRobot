@@ -58,6 +58,7 @@ def train(args):
     total_reward = []
     avg_scores = []
     max_score = -1
+    max_avg_score = -1
     var = 1.
     ep_rets = []
     ep_ret = 0.
@@ -148,9 +149,9 @@ def train(args):
                     worsen_tolerance -= 1                   # count worsening counts
                     print("Loaded from last best model.")
                     agent.load(trained_models_dir + '/tworobot_weights.pth')             # continue from last best-model
-                if worsen_tolerance <= 0:                   # earliy stop training
-                    print("Early Stop Training.")
-                    break
+                # if worsen_tolerance <= 0:                   # earliy stop training
+                #     print("Early Stop Training.")
+                    # break
 
 def test(args):
     np.random.seed(args.seed)
@@ -167,14 +168,14 @@ def test(args):
 
     is_training = False
     env_name = 'env' + str(args.env_id)
-    trained_models_dir = './src/trained_models/bl-' + env_name + '-models/' if not args.visual_obs else \
-            './src/trained_models/vis_obs-' + env_name + '-models/'
+    trained_models_dir = './src/model_weights/mddpg/tworobot_weights.pth'
 
     
     env = Env(is_training, args.env_id, args.test_env_id, args.num_agents, args.visual_obs, args.n_scan)
 
     # 2 agents
     agent = MADDPG(state_dim, action_dim, args.num_agents, args.buffer_size, args.gamma, args.batch_size, args.seed, args.tau)
+    agent.load_state_dict(torch.load(trained_models_dir))
 
     past_action = np.array([[0., 0.], [0., 0.]])
     print('State Dimensions: ' + str(state_dim))
@@ -253,12 +254,12 @@ if __name__ == '__main__':
     
     #model parameters
     parser.add_argument('--num-agents', type=int, default=2, help='number of agents')
-    parser.add_argument('--buffer-size', type=int, default=10000, help='Size of the replay buffer')
+    parser.add_argument('--buffer-size', type=int, default=100000, help='Size of the replay buffer')
     parser.add_argument('--batch-size', type=int, default=128, help='Batch size')
     parser.add_argument('--gamma', type=float, default=0.99, help='gamma')
     parser.add_argument('--tau', type=float, default=1e-3, help='tau for soft update')
     parser.add_argument('--initial-random-steps', type=int, default=int(1e2), help="initital Exploration steps")
-    parser.add_argument('--policy_update_fequency', type=int, default=2, help='policy update frequency')
+    parser.add_argument('--policy-update-fequency', type=int, default=2, help='policy update frequency')
 
     #device
     parser.add_argument('--device', type=str, default='cpu', help='Which devices to use, cuda or cpu')
