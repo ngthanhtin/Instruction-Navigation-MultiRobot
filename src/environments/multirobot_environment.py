@@ -159,6 +159,19 @@ class Env():
         self.goal_position.position.x = self.object_positions[self.object_target_id][0]
         self.goal_position.position.y = self.object_positions[self.object_target_id][1]
 
+        goal_urdf = open(goal_model_dir, "r").read()
+        self.target = SpawnModel
+        self.target.model_name = 'target'  # the same with sdf name
+        self.target.model_xml = goal_urdf
+        # build new target, only spawn in the beginning of the episode
+        # Build the target
+        rospy.wait_for_service('/gazebo/spawn_sdf_model')
+        try:
+            self.goal(self.target.model_name, self.target.model_xml, 'namespace', self.goal_position, 'world')
+        except (rospy.ServiceException) as e:
+            print("/gazebo/failed to build the target")
+        rospy.wait_for_service('/gazebo/unpause_physics')
+
         #------------ROBOTS----------------#
         self.agents = []
         for i in range(self.num_agents):
@@ -286,34 +299,15 @@ class Env():
                 else:
                     self.goal_position.position.x, self.goal_position.position.y = self.test_goals[self.test_goals_id]
 
-        if is_reset:
-            # build new target, only spawn in the beginning of the episode
-            rospy.wait_for_service('/gazebo/delete_model')
-            self.del_model('target')
-
-            # Build the target
-            rospy.wait_for_service('/gazebo/spawn_sdf_model')
-            try:
-                goal_urdf = open(goal_model_dir, "r").read()
-                target = SpawnModel
-                target.model_name = 'target'  # the same with sdf name
-                target.model_xml = goal_urdf
-                
-                self.goal(target.model_name, target.model_xml, 'namespace', self.goal_position, 'world')
-
-            except (rospy.ServiceException) as e:
-                print("/gazebo/failed to build the target")
-            rospy.wait_for_service('/gazebo/unpause_physics')
-        else:
-            # only need to re-set target model state
-            model_state = ModelState()
-            model_state.model_name = 'target'
-            # assign position
-            model_state.pose.position.x = self.goal_position.position.x
-            model_state.pose.position.y = self.goal_position.position.y
-            # Respawn the target
-            self.gazebo_model_state_service(model_state)
-            print("respawn target + ", is_reset)
+        # only need to re-set target model state
+        model_state = ModelState()
+        model_state.model_name = 'target'
+        # assign position
+        model_state.pose.position.x = self.goal_position.position.x
+        model_state.pose.position.y = self.goal_position.position.y
+        # Respawn the target
+        self.gazebo_model_state_service(model_state)
+        print("respawn target + ", is_reset)
 
     def setEachReward(self, die_s, arrive_s):
         reward_s = []
