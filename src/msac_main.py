@@ -66,16 +66,15 @@ def train(args):
     scores = []
     avg_scores = []
     score = [0 for _ in range(num_agents)]
-    
+    num_episode = 0
     while True:
         states = env.reset()
         score = np.zeros(num_agents) 
-        
-        
-        num_episode = 0
+        num_episode += 1
+        one_round_step = 0
         while True:
-            num_episode += 1
             agent.total_step += 1
+            one_round_step += 1
             a = agent.select_action(states)
             a[0][0] = np.clip(np.random.normal(a[0][0], var), 0., 1.)
             a[0][1] = np.clip(np.random.normal(a[0][1], var), -0.5, 0.5)
@@ -102,7 +101,7 @@ def train(args):
             if agent.total_step % 5 == 0 and agent.total_step > initial_random_steps:
                 var *= 0.9999
 
-            if np.any(dones):
+            if np.any(arrives) or one_round_step >= 500:
                 break
 
         scores.append(max(score))
@@ -111,7 +110,7 @@ def train(args):
         # plot(num_episode, scores, avg_scores, actor_losses, qf_losses, v_losses, alpha_losses)
 
 
-        episode_score = np.max(scores)
+        episode_score = np.max(score)
         total_rewards.append(episode_score)
         print("Score: {:.4f}".format(episode_score))
 
