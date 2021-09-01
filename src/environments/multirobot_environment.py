@@ -155,22 +155,10 @@ class Env():
         #-----------GOAL-------------#
         self.goal_position = Pose()
 
-        self.object_target_id = np.random.randint(len(self.model_names))
-        self.goal_position.position.x = self.object_positions[self.object_target_id][0]
-        self.goal_position.position.y = self.object_positions[self.object_target_id][1]
-
         goal_urdf = open(goal_model_dir, "r").read()
         self.target = SpawnModel
         self.target.model_name = 'target'  # the same with sdf name
         self.target.model_xml = goal_urdf
-        # build new target, only spawn in the beginning of the episode
-        # Build the target
-        rospy.wait_for_service('/gazebo/spawn_sdf_model')
-        try:
-            self.goal(self.target.model_name, self.target.model_xml, 'namespace', self.goal_position, 'world')
-        except (rospy.ServiceException) as e:
-            print("/gazebo/failed to build the target")
-        rospy.wait_for_service('/gazebo/unpause_physics')
 
         #------------ROBOTS----------------#
         self.agents = []
@@ -222,7 +210,8 @@ class Env():
                     agent_object_dists.append(math.hypot(self.object_positions[k][0] - agent.position.x, self.object_positions[k][1] - agent.position.y))
 
                 index_min = agent_object_dists.index(min(agent_object_dists))
-                if index_min == self.object_target_id and min(agent_object_dists) <= min_range*2:
+                print(self.model_names[self.object_target_id], agent_object_dists[index_min])
+                if index_min == self.object_target_id and agent_object_dists[index_min] <= min_range*2:
                     print("Arrive!!!")
                     arrive = True
 
@@ -281,6 +270,7 @@ class Env():
 
         if self.is_training:
                 self.object_target_id = np.random.randint(len(self.model_names))
+                print("Reset first time: ", self.model_names[self.object_target_id])
                 self.goal_position.position.x = self.object_positions[self.object_target_id][0]
                 self.goal_position.position.y = self.object_positions[self.object_target_id][1]
                 #update goal position
@@ -299,14 +289,15 @@ class Env():
                 else:
                     self.goal_position.position.x, self.goal_position.position.y = self.test_goals[self.test_goals_id]
 
-        # only need to re-set target model state
-        model_state = ModelState()
-        model_state.model_name = 'target'
-        # assign position
-        model_state.pose.position.x = self.goal_position.position.x
-        model_state.pose.position.y = self.goal_position.position.y
-        # Respawn the target
-        self.gazebo_model_state_service(model_state)
+        # Build the target
+        rospy.wait_for_service('/gazebo/delete_model')
+        self.del_model('target')
+        rospy.wait_for_service('/gazebo/spawn_sdf_model')
+        try:
+            self.goal(self.target.model_name, self.target.model_xml, 'namespace', self.goal_position, 'world')
+        except (rospy.ServiceException) as e:
+            print("/gazebo/failed to build the target")
+        rospy.wait_for_service('/gazebo/unpause_physics')
         print("respawn target + ", is_reset)
 
     def setEachReward(self, die_s, arrive_s):
@@ -399,6 +390,12 @@ class Env():
         
 
         r_s = self.setEachReward(die_s, arrive_s)
+        # set multiagent reward (competitive)
+        if arrive_s[0] == 1 and arrive_s[1] == 0:
+            r_s[1] = -100
+        if arrive_s[0] == 0 and arrive_s[1] == 1:
+            r_s[0] = -100  
+        #---------------------------
         self.n_step += 1
 
         # Reset goal if collided
